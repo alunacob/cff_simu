@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 #matplotlib.use('TkAgg')  # Set the backend
 import matplotlib.colors as mcolors
 import os
+import numpy as np
 
 
 # Helper function to calculate distance between two points
@@ -181,7 +182,7 @@ def plot_folium_map_with_features(points, features, output_html='map_output.html
     map.save(output_html)
 
 
-def parse_gpx(file_path, min_distance=500):
+def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
     with open(file_path, 'r') as gpx_file:
         gpx = gpxpy.parse(gpx_file)
         regularized_points = []
@@ -194,26 +195,47 @@ def parse_gpx(file_path, min_distance=500):
 
         for track in gpx.tracks:
             for segment in track.segments:
-                for point in segment.points:
+                elevations = []
+                gradients = []
+                distances = []
+                for point in segment.points:    
                     if last_point is not None:
                         segment_distance = distance(last_point, point)
                         total_distance2 += segment_distance
                         accumulated_distance += segment_distance
-                        accumulated_elevation += (point.elevation if point.elevation != None else 0) - (last_point.elevation if last_point.elevation != None else 0)
+                        elevation_gain = (point.elevation if point.elevation != None else 0) - (last_point.elevation if last_point.elevation != None else 0)
+                        accumulated_elevation += elevation_gain
+                        gradient = (elevation_gain / segment_distance) * 100 if segment_distance > 0 else 0
+
+                        if segment_distance <= min_precise_distance:
+                            last_point = point
+                            continue
+                        
+                        gradients.append(gradient)
+                        distances.append(segment_distance)
+                        elevations.append(elevation_gain)
 
                         if accumulated_distance >= min_distance:
                             total_distance = total_distance + accumulated_distance
-                            gradient = (accumulated_elevation / accumulated_distance) * 100
+                            accumulated_gradient = (accumulated_elevation / accumulated_distance) * 100
                             regularized_points.append({
                                 'lat': point.latitude, 
                                 'lon': point.longitude, 
                                 'elev': point.elevation, 
+                                'delta_dist': accumulated_distance,
                                 'dist': total_distance,
-                                'gradient': gradient,
+                                'gradient': accumulated_gradient,
+                                'max_gradient': np.max(np.array(gradients)),
+                                'min_gradient' : np.min(np.array(gradients)),
                                 'feature_type': ''  # To be updated later
                             })
                             accumulated_distance = 0
                             accumulated_elevation = 0
+                            if np.max(np.array(gradients)) > 25:
+                                print({'dist':distances,'elev':elevations,'grad':gradients})
+                            gradients = []
+                            distances= []
+                            elevations= []
                         points.append({
                             'lat': point.latitude,
                             'lon' : point.longitude,
