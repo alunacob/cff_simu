@@ -5,7 +5,7 @@ COPY requirements.txt requirements.txt
 # install the notebook package
 RUN pip install --no-cache --upgrade pip && \
     pip install --no-cache notebook jupyterlab && \
-    pip install -r requirements.txt --root-user-action
+    pip install -r requirements.txt --root-user-action=ignore
 
 # create user with a home directory
 ARG NB_USER=jovyan
