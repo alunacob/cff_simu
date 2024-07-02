@@ -247,13 +247,86 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
 
         return regularized_points, total_distance, points
 
-def classify_point(gradient):
-    if -3 <= gradient <= 3:
-        return 'flat'
-    elif gradient > 3:
-        return 'potential_climb'
-    elif gradient < -3:
-        return 'descent'
+def classify_point(gradient, max_gradient, min_gradient, delta_dist, is_cobble, is_last_point):
+    if gradient < 5 and is_last_point:  # Si último punto = si Y gradiente medio < 5, Sprint
+        return 'Sprint'
+    elif gradient < 3:
+        return 'Downhill'
+    elif gradient >= 3:
+        if delta_dist < 2000:
+            if gradient < 5:
+                if min_gradient > -3:
+                    return 'Flat Hills Cobblestone ND' if is_cobble else 'Hills Flat ND'
+                else:
+                    return 'Flat Hills Cobblestone' if is_cobble else 'Hills Flat'
+            else:
+                if min_gradient > -3:
+                    return 'Hills Cobblestone ND' if is_cobble else 'Hills ND'
+                else:
+                    return 'Hills Cobblestone' if is_cobble else 'Hills'
+        elif delta_dist < 3000:
+            if gradient > 10:
+                if min_gradient > -3:
+                    return 'Cobblestine Hills Climbing ND' if is_cobble else 'Hills Climbing ND'
+                else:
+                    return 'Cobblestine Hills Climbing' if is_cobble else 'Hills Climbing'
+            else:
+                if min_gradient > -3:
+                    return 'Hills Cobblestone ND' if is_cobble else 'Hills ND'
+                else:
+                    return 'Hills Cobblestone' if is_cobble else 'Hills'
+        elif delta_dist < 5000:
+            if gradient > 8:
+                if min_gradient > -3:
+                    return 'Cobblestone Hills Climbing ND' if is_cobble else 'Climbing Hills ND'
+                else:
+                    return 'Cobblestone Hills Climbing' if is_cobble else 'Climbing Hills'
+            elif gradient > 5:
+                if min_gradient > -3:
+                    return 'Cobblestone Hills Climbing ND' if is_cobble else 'Hills Climbing ND'
+                else:
+                    return 'Cobblestone Hills Climbing' if is_cobble else 'Hills Climbing'
+            else:
+                if min_gradient > -3:
+                    return 'Hills Cobblestone ND' if is_cobble else 'Hills ND'
+                else:
+                    return 'Hills Cobblestone' if is_cobble else 'Hills'
+        elif delta_dist < 8000:
+            if gradient > 8:
+                if min_gradient > -3:
+                    return 'Cobblestone Climbing ND' if is_cobble else 'Climbing ND'
+                else:
+                    return 'Cobblestone Climbing' if is_cobble else 'Climbing'
+            elif gradient > 5:
+                if min_gradient > -3:
+                    return 'Cobblestone Hills Climbing ND' if is_cobble else 'Climbing Hills ND'
+                else:
+                    return 'Cobblestone Hills Climbing' if is_cobble else 'Climbing Hills'
+            else:
+                if min_gradient > -3:
+                    return 'Cobblestone Hills Climbing ND' if is_cobble else 'Hills Climbing ND'
+                else:
+                    return 'Cobblestone Hills Climbing' if is_cobble else 'Hills Climbing'
+        else:
+            if gradient < 5:
+                if min_gradient > -3:
+                    return 'Cobblestone Flat Climbing' if is_cobble else 'Flat Climbing'
+                else:
+                    return 'Cobblestone Hills Climbing' if is_cobble else 'Climbing Hills'
+            else:
+                if min_gradient > -3:
+                    return 'Cobblestone Climbing ND' if is_cobble else 'Climbing ND'
+                else:
+                    return 'Cobblestone Climbing' if is_cobble else 'Climbing'
+    else:
+        if max_gradient < 5.5:
+            return 'Flat Cobblestones' if is_cobble else 'Flat'
+        else:
+            if min_gradient < -3:
+                return 'Flat Hills Cobblestone ND' if is_cobble else 'Flat Hills ND'
+            else:
+                return 'Flat Hills Cobblestone' if is_cobble else 'Flat Hills'
+
 
 def merge_and_reclassify_sections(sections):
     merged_sections = []
@@ -300,6 +373,42 @@ def calculate_difficulty(feature, points):
 
 def identify_features(points):
     sections = []
+    current_section = {
+        'type': classify_point(points[0]['gradient'], points[0]['max_gradient'], points[0]['min_gradient'], points[0]['delta_dist'], points[0].get('is_cobble', False), False), 
+        'start_km': 0, 
+        'end_km': 0, 
+        'length': 0
+    }
+
+    for i in range(1, len(points)):
+        point_type = classify_point(points[i]['gradient'], points[i]['max_gradient'], points[i]['min_gradient'], points[i]['delta_dist'], points[i].get('is_cobble', False), True if i == len(points)-1 else False)
+        current_section['length'] += points[i]['dist'] - points[i-1]['dist']
+        current_section['end_km'] = points[i]['dist']
+
+        if point_type != current_section['type']:
+            sections.append(current_section)
+            current_section = {
+                'type': point_type, 
+                'start_km': points[i]['dist'], 
+                'end_km': points[i]['dist'], 
+                'length': 0
+            }
+
+    # Add the last section
+    sections.append(current_section)
+
+    # Merge and reclassify sections
+    features = merge_and_reclassify_sections(sections)
+
+    # Calculate difficulty and end proximity for each feature
+    for feature in features:
+        feature['difficulty'] = calculate_difficulty(feature, points)  # Implement this function based on your criteria
+        feature['end_proximity'] = points[-1]['dist'] - feature['end_km']
+
+    return features
+'''
+def identify_features(points):
+    sections = []
     current_section = {'type': classify_point(points[0]['gradient']), 'start_km': 0, 'end_km': 0, 'length': 0}
 
     for i in range(1, len(points)):
@@ -323,7 +432,7 @@ def identify_features(points):
         feature['end_proximity'] = points[-1]['dist'] - feature['end_km']
 
     return features
-
+'''
 
 def calculate_abilities(features, total_distance):
     abilities = {'Stamina': 0, 'Sprint': 0, 'Climbing': 0, 'Flat': 0, 'Technique': 0, 'Downhill': 0, 'Hills': 0, 'Aggressiveness': 0, 'Teamwork' : 0}
