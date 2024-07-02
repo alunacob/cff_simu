@@ -250,7 +250,7 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
 def classify_point(gradient, max_gradient, min_gradient, delta_dist, is_cobble, is_last_point):
     if gradient < 5 and is_last_point:  # Si último punto = si Y gradiente medio < 5, Sprint
         return 'Sprint'
-    elif gradient < 3:
+    elif gradient < -3:
         return 'Downhill'
     elif gradient >= 3:
         if delta_dist < 2000:
@@ -380,7 +380,7 @@ def identify_features(points):
         'length': 0
     }
 
-    for i in range(1, len(points)):
+    for i in range(0, len(points)):
         point_type = classify_point(points[i]['gradient'], points[i]['max_gradient'], points[i]['min_gradient'], points[i]['delta_dist'], points[i].get('is_cobble', False), True if i == len(points)-1 else False)
         current_section['length'] += points[i]['dist'] - points[i-1]['dist']
         current_section['end_km'] = points[i]['dist']
@@ -393,6 +393,7 @@ def identify_features(points):
                 'end_km': points[i]['dist'], 
                 'length': 0
             }
+
 
     # Add the last section
     sections.append(current_section)
