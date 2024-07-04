@@ -193,12 +193,18 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
         accumulated_elevation = 0
         last_point = None
 
+        i=-1
         for track in gpx.tracks:
             for segment in track.segments:
                 elevations = []
                 gradients = []
                 distances = []
-                for point in segment.points:    
+                indices = []
+                segment_distance=0
+                
+                for point in segment.points: 
+                    i+=1
+                    indices.append(i)
                     if last_point is not None:
                         segment_distance = distance(last_point, point)
                         total_distance2 += segment_distance
@@ -208,6 +214,14 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
                         gradient = (elevation_gain / segment_distance) * 100 if segment_distance > 0 else 0
 
                         if segment_distance <= min_precise_distance:
+                            points.append({
+                                'index': i,
+                                'lat': point.latitude,
+                                'lon' : point.longitude,
+                                'elev': point.elevation,
+                                'dist': total_distance2,
+                                'segment_dist': segment_distance
+                            })
                             last_point = point
                             continue
                         
@@ -216,6 +230,7 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
                         elevations.append(elevation_gain)
 
                         if accumulated_distance >= min_distance:
+                            #print((i,accumulated_distance))
                             total_distance = total_distance + accumulated_distance
                             accumulated_gradient = (accumulated_elevation / accumulated_distance) * 100
                             regularized_points.append({
@@ -227,6 +242,7 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
                                 'gradient': accumulated_gradient,
                                 'max_gradient': np.max(np.array(gradients)),
                                 'min_gradient' : np.min(np.array(gradients)),
+                                'indices': indices,
                                 'feature_type': ''  # To be updated later
                             })
                             accumulated_distance = 0
@@ -236,12 +252,15 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
                             gradients = []
                             distances= []
                             elevations= []
-                        points.append({
-                            'lat': point.latitude,
-                            'lon' : point.longitude,
-                            'elev': point.elevation,
-                            'dist': total_distance2
-                        })
+                            indices = []
+                    points.append({
+                        'index': i,
+                        'lat': point.latitude,
+                        'lon' : point.longitude,
+                        'elev': point.elevation,
+                        'dist': total_distance2,
+                        'segment_dist': segment_distance
+                    })
                     last_point = point
                         
 
@@ -327,7 +346,7 @@ def classify_point(gradient, max_gradient, min_gradient, delta_dist, is_cobble, 
             else:
                 return 'Flat Hills Cobblestone' if is_cobble else 'Flat Hills'
 
-
+'''
 def merge_and_reclassify_sections(sections):
     merged_sections = []
     current_section = sections[0]
@@ -351,6 +370,7 @@ def merge_and_reclassify_sections(sections):
     merged_sections.append(current_section)
 
     return merged_sections
+'''
 
 def calculate_difficulty(feature, points):
     # Calculate the average and maximum gradient over the feature length
@@ -371,42 +391,56 @@ def calculate_difficulty(feature, points):
 
     return difficulty
 
+
+# Aggregate similar segments
+def aggregate_segments(df, gradient_threshold=0.5):
+    aggregated_segments = []
+    current_segment = df.iloc[0].copy()
+    current_indices = [0]
+
+    for i in range(1, len(df)):
+        row = df.iloc[i]
+        if abs(row['gradient'] - current_segment['gradient']) <= gradient_threshold:
+            current_segment['delta_dist'] += row['delta_dist']
+            current_segment['dist'] += row['dist']
+            current_segment['max_gradient'] = max(current_segment['max_gradient'], row['max_gradient'])
+            current_segment['min_gradient'] = min(current_segment['min_gradient'], row['min_gradient'])
+            current_indices.append(i)
+        else:
+            aggregated_segments.append((current_segment, current_indices))
+            current_segment = row.copy()
+            current_indices = [i]
+
+    # Append the last segment
+    aggregated_segments.append((current_segment, current_indices))
+    return aggregated_segments
+
+
 def identify_features(points):
-    sections = []
-    current_section = {
-        'type': classify_point(points[0]['gradient'], points[0]['max_gradient'], points[0]['min_gradient'], points[0]['delta_dist'], points[0].get('is_cobble', False), False), 
-        'start_km': 0, 
-        'end_km': 0, 
-        'length': 0
-    }
 
-    for i in range(0, len(points)):
-        point_type = classify_point(points[i]['gradient'], points[i]['max_gradient'], points[i]['min_gradient'], points[i]['delta_dist'], points[i].get('is_cobble', False), True if i == len(points)-1 else False)
-        current_section['length'] += points[i]['dist'] - points[i-1]['dist']
-        current_section['end_km'] = points[i]['dist']
+    aggregated_segments = aggregate_segments(points)
+    
+    # Classify aggregated segments and project back to original DataFrame
+    classifications = []
+    
+    for segment, indices in aggregated_segments:
+        is_last_point = indices[-1] == len(points) - 1
+        segment_type = classify_point(segment['gradient'], segment['max_gradient'], segment['min_gradient'], segment['delta_dist'], False, is_last_point)
+        for index in indices:
+            classifications.append((index, segment_type))
+    
+    # Sort classifications by original index order
+    classifications.sort(key=lambda x: x[0])
+    
+    # Extract just the classifications
+    segment_types = [x[1] for x in classifications]
+    
+    # Add classifications to the original DataFrame
+    points['segment_type'] = segment_types
 
-        if point_type != current_section['type']:
-            sections.append(current_section)
-            current_section = {
-                'type': point_type, 
-                'start_km': points[i]['dist'], 
-                'end_km': points[i]['dist'], 
-                'length': 0
-            }
+    return points
 
 
-    # Add the last section
-    sections.append(current_section)
-
-    # Merge and reclassify sections
-    features = merge_and_reclassify_sections(sections)
-
-    # Calculate difficulty and end proximity for each feature
-    for feature in features:
-        feature['difficulty'] = calculate_difficulty(feature, points)  # Implement this function based on your criteria
-        feature['end_proximity'] = points[-1]['dist'] - feature['end_km']
-
-    return features
 '''
 def identify_features(points):
     sections = []
