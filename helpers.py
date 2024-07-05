@@ -286,9 +286,9 @@ def classify_point(gradient, max_gradient, min_gradient, delta_dist, is_cobble, 
         elif delta_dist < 3000:
             if gradient > 10:
                 if min_gradient > -3:
-                    return 'Cobblestine Hills Climbing ND' if is_cobble else 'Hills Climbing ND'
+                    return 'Cobblestone Hills Climbing ND' if is_cobble else 'Hills Climbing ND'
                 else:
-                    return 'Cobblestine Hills Climbing' if is_cobble else 'Hills Climbing'
+                    return 'Cobblestone Hills Climbing' if is_cobble else 'Hills Climbing'
             else:
                 if min_gradient > -3:
                     return 'Hills Cobblestone ND' if is_cobble else 'Hills ND'
