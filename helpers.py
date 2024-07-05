@@ -266,13 +266,13 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
 
         return regularized_points, total_distance, points
 
-def classify_point(gradient, max_gradient, min_gradient, delta_dist, is_cobble, is_last_point):
+def classify_point(gradient, max_gradient, min_gradient, climb_length, is_cobble, is_last_point):
     if gradient < 5 and is_last_point:  # Si último punto = si Y gradiente medio < 5, Sprint
         return 'Sprint'
     elif gradient < -3:
         return 'Downhill'
     elif gradient >= 3:
-        if delta_dist < 2000:
+        if climb_length < 2000:
             if gradient < 5:
                 if min_gradient > -3:
                     return 'Flat Hills Cobblestone ND' if is_cobble else 'Hills Flat ND'
@@ -283,7 +283,7 @@ def classify_point(gradient, max_gradient, min_gradient, delta_dist, is_cobble, 
                     return 'Hills Cobblestone ND' if is_cobble else 'Hills ND'
                 else:
                     return 'Hills Cobblestone' if is_cobble else 'Hills'
-        elif delta_dist < 3000:
+        elif climb_length < 3000:
             if gradient > 10:
                 if min_gradient > -3:
                     return 'Cobblestone Hills Climbing ND' if is_cobble else 'Hills Climbing ND'
@@ -294,7 +294,7 @@ def classify_point(gradient, max_gradient, min_gradient, delta_dist, is_cobble, 
                     return 'Hills Cobblestone ND' if is_cobble else 'Hills ND'
                 else:
                     return 'Hills Cobblestone' if is_cobble else 'Hills'
-        elif delta_dist < 5000:
+        elif climb_length < 5000:
             if gradient > 8:
                 if min_gradient > -3:
                     return 'Cobblestone Hills Climbing ND' if is_cobble else 'Climbing Hills ND'
@@ -310,7 +310,7 @@ def classify_point(gradient, max_gradient, min_gradient, delta_dist, is_cobble, 
                     return 'Hills Cobblestone ND' if is_cobble else 'Hills ND'
                 else:
                     return 'Hills Cobblestone' if is_cobble else 'Hills'
-        elif delta_dist < 8000:
+        elif climb_length < 8000:
             if gradient > 8:
                 if min_gradient > -3:
                     return 'Cobblestone Climbing ND' if is_cobble else 'Climbing ND'
@@ -415,17 +415,34 @@ def aggregate_segments(df, gradient_threshold=0.5):
     aggregated_segments.append((current_segment, current_indices))
     return aggregated_segments
 
+def calculate_climb_length(df):
+    climb_length = 0
+    current_indices = []
+
+    for i in range(0, len(df)):
+        row = df.iloc[i]        
+        if row['gradient'] >= 3:
+            current_indices.append(i)
+            climb_length += row['delta_dist']
+        else:
+            for j in current_indices
+                row2 = df.iloc[j]
+                row2['climb_length'] = climb_length
+            current_indices = [i]
+            climb_length = 0
+            current_indices = []
+            
 
 def identify_features(points):
 
-    aggregated_segments = aggregate_segments(points)
+    calculate_climb_length(points)
     
     # Classify aggregated segments and project back to original DataFrame
     classifications = []
     
     for segment, indices in aggregated_segments:
         is_last_point = indices[-1] == len(points) - 1
-        segment_type = classify_point(segment['gradient'], segment['max_gradient'], segment['min_gradient'], segment['delta_dist'], False, is_last_point)
+        segment_type = classify_point(segment['gradient'], segment['max_gradient'], segment['min_gradient'], segment['climb_length'], False, is_last_point)
         for index in indices:
             classifications.append((index, segment_type))
     
