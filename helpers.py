@@ -201,6 +201,7 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
                 distances = []
                 indices = []
                 segment_distance=0
+                climb_length = 0
                 
                 for point in segment.points: 
                     i+=1
