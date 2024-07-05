@@ -435,16 +435,15 @@ def calculate_climb_length(df):
 
 def identify_features(points):
 
-    Points['climb_length'] = "
+    points['climb_length'] = "
     
     calculate_climb_length(points)
     
     # Classify aggregated segments and project back to original DataFrame
     classifications = []
     
-    for segment in track.segments:
+    for segment in points:
         segment_type = classify_point(segment['gradient'], segment['max_gradient'], segment['min_gradient'], segment['climb_length'], False, is_last_point)
-        for index in indices:
     
     # Sort classifications by original index order
     classifications.sort(key=lambda x: x[0])
