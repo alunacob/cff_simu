@@ -201,7 +201,6 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
                 distances = []
                 indices = []
                 segment_distance=0
-                climb_length = 0
                 
                 for point in segment.points: 
                     i+=1
@@ -394,27 +393,27 @@ def calculate_difficulty(feature, points):
 
 
 # Aggregate similar segments
-def aggregate_segments(df, gradient_threshold=0.5):
-    aggregated_segments = []
-    current_segment = df.iloc[0].copy()
-    current_indices = [0]
+#def aggregate_segments(df, gradient_threshold=0.5):
+    #aggregated_segments = []
+    #current_segment = df.iloc[0].copy()
+    #current_indices = [0]
 
-    for i in range(1, len(df)):
-        row = df.iloc[i]
-        if abs(row['gradient'] - current_segment['gradient']) <= gradient_threshold:
-            current_segment['delta_dist'] += row['delta_dist']
-            current_segment['dist'] += row['dist']
-            current_segment['max_gradient'] = max(current_segment['max_gradient'], row['max_gradient'])
-            current_segment['min_gradient'] = min(current_segment['min_gradient'], row['min_gradient'])
-            current_indices.append(i)
-        else:
-            aggregated_segments.append((current_segment, current_indices))
-            current_segment = row.copy()
-            current_indices = [i]
+    #for i in range(1, len(df)):
+        #row = df.iloc[i]
+        #if abs(row['gradient'] - current_segment['gradient']) <= gradient_threshold:
+            #current_segment['delta_dist'] += row['delta_dist']
+            #current_segment['dist'] += row['dist']
+            #current_segment['max_gradient'] = max(current_segment['max_gradient'], row['max_gradient'])
+            #current_segment['min_gradient'] = min(current_segment['min_gradient'], row['min_gradient'])
+            #current_indices.append(i)
+        #else:
+            #aggregated_segments.append((current_segment, current_indices))
+            #current_segment = row.copy()
+            #current_indices = [i]
 
     # Append the last segment
-    aggregated_segments.append((current_segment, current_indices))
-    return aggregated_segments
+    #aggregated_segments.append((current_segment, current_indices))
+    #return aggregated_segments
 
 def calculate_climb_length(df):
     climb_length = 0
@@ -436,16 +435,16 @@ def calculate_climb_length(df):
 
 def identify_features(points):
 
+    Points['climb_length'] = "
+    
     calculate_climb_length(points)
     
     # Classify aggregated segments and project back to original DataFrame
     classifications = []
     
-    for segment, indices in aggregated_segments:
-        is_last_point = indices[-1] == len(points) - 1
+    for segment in track.segments:
         segment_type = classify_point(segment['gradient'], segment['max_gradient'], segment['min_gradient'], segment['climb_length'], False, is_last_point)
         for index in indices:
-            classifications.append((index, segment_type))
     
     # Sort classifications by original index order
     classifications.sort(key=lambda x: x[0])
