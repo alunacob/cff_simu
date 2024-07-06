@@ -435,7 +435,7 @@ def calculate_climb_length(df):
 
 def identify_features(points):
 
-    points['climb_length'] = "
+    points['climb_length'] = ""
     
     calculate_climb_length(points)
     
