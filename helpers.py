@@ -132,7 +132,7 @@ def plot_map(points, output_html='map_output.html'):
 
     # Save the map to an HTML file
     map.save(output_html)
-    print(f"Map saved as {output_html}")
+    print(f'Map saved as {output_html}')
 
 def plot_folium_map_with_features(points, features, output_html='map_output.html'):
     # Create the map centered around the average coordinates
@@ -392,29 +392,6 @@ def calculate_difficulty(feature, points):
     return difficulty
 
 
-# Aggregate similar segments
-#def aggregate_segments(df, gradient_threshold=0.5):
-    #aggregated_segments = []
-    #current_segment = df.iloc[0].copy()
-    #current_indices = [0]
-
-    #for i in range(1, len(df)):
-        #row = df.iloc[i]
-        #if abs(row['gradient'] - current_segment['gradient']) <= gradient_threshold:
-            #current_segment['delta_dist'] += row['delta_dist']
-            #current_segment['dist'] += row['dist']
-            #current_segment['max_gradient'] = max(current_segment['max_gradient'], row['max_gradient'])
-            #current_segment['min_gradient'] = min(current_segment['min_gradient'], row['min_gradient'])
-            #current_indices.append(i)
-        #else:
-            #aggregated_segments.append((current_segment, current_indices))
-            #current_segment = row.copy()
-            #current_indices = [i]
-
-    # Append the last segment
-    #aggregated_segments.append((current_segment, current_indices))
-    #return aggregated_segments
-
 def calculate_climb_length(df):
     climb_length = 0
     current_indices = []
@@ -438,17 +415,14 @@ def identify_features(points):
     calculate_climb_length(points)
     
     # Classify aggregated segments and project back to original DataFrame
-    classifications = []
+    segment_types = []
     
-    for segment in points:
+    for index,segment in points.iterrows():
+        is_last_point = True if index == len(points) -1 else False
         segment_type = classify_point(segment['gradient'], segment['max_gradient'], segment['min_gradient'], segment['climb_length'], False, is_last_point)
+        segment_types.append(segment_type)
     
-    # Sort classifications by original index order
-    classifications.sort(key=lambda x: x[0])
-    
-    # Extract just the classifications
-    segment_types = [x[1] for x in classifications]
-    
+        
     # Add classifications to the original DataFrame
     points['segment_type'] = segment_types
 
