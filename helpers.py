@@ -399,12 +399,12 @@ def calculate_climb_length(df):
     for i in range(0, len(df)):
         row = df.iloc[i]        
         if row['gradient'] >= 3:
-            if row['is_last_point'] = true:
+            if row['is_last_point'] == True:
                 current_indices.append(i)
-                climb_length += row[delta_dist]
+                climb_length += row['delta_dist']
                 for k in current_indices:
                     df.loc[k, 'climb_length'] = climb_length
-            else        
+            else:
                 current_indices.append(i)
                 climb_length += row['delta_dist']
     else:
