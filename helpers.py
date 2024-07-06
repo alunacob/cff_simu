@@ -399,13 +399,19 @@ def calculate_climb_length(df):
     for i in range(0, len(df)):
         row = df.iloc[i]        
         if row['gradient'] >= 3:
-            current_indices.append(i)
-            climb_length += row['delta_dist']
-        else:
-            for j in current_indices:
-               df.loc[j, 'climb_length'] = climb_length
-            current_indices = []
-            climb_length = 0
+            if row['is_last_point'] = true:
+                current_indices.append(i)
+                climb_length += row[delta_dist]
+                for k in current_indices:
+                    df.loc[k, 'climb_length'] = climb_length
+            else        
+                current_indices.append(i)
+                climb_length += row['delta_dist']
+    else:
+        for j in current_indices:
+            df.loc[j, 'climb_length'] = climb_length
+        current_indices = []
+        climb_length = 0
             
 
 def identify_features(points):
