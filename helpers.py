@@ -425,7 +425,7 @@ def calculate_climb_length(df):
             current_indices.append(i)
             climb_length += row['delta_dist']
         else:
-            for j in current_indices
+            for j in current_indices:
                 row2 = df.iloc[j]
                 row2['climb_length'] = climb_length
             current_indices = [i]
