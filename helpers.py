@@ -426,11 +426,9 @@ def calculate_climb_length(df):
             climb_length += row['delta_dist']
         else:
             for j in current_indices:
-                row2 = df.iloc[j]
-                row2['climb_length'] = climb_length
-            current_indices = [i]
-            climb_length = 0
+               df.loc[j, 'climb_length'] = climb_length
             current_indices = []
+            climb_length = 0
             
 
 def identify_features(points):
