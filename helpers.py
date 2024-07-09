@@ -372,24 +372,84 @@ def merge_and_reclassify_sections(sections):
     return merged_sections
 '''
 
-def calculate_difficulty(feature, points):
-    # Calculate the average and maximum gradient over the feature length
-    start_index = next(i for i, p in enumerate(points) if p['dist'] >= feature['start_km'])
-    end_index = next(i for i, p in enumerate(points) if p['dist'] >= feature['end_km'])
+def calculate_difficulty(segment_type, climb_length, gradient, feature_length):
+    difficulty = 0
+    if segment_type == 'Flat':
+        if gradient <= 0:
+            return difficulty
+        else:    
+            difficulty = gradient/3*5
+            return difficulty
+    elif segment_type == 'Flat Hills' or 'Flat Hills ND':
+        if gradient <= 0:
+            difficulty = 5
+            return difficulty
+        else:
+            difficulty = 5 + (gradient/3*5)
+            return difficulty
+    elif segment_type == 'Hills Flat' or 'Hills Flat ND':
+        difficulty = 10 + ((gradient-3)/2*5)
+        return difficulty
+    elif segment_type == 'Hills' or 'Hills ND' or 'Hills Time Trial':
+        difficulty = 15 + ((gradient-5)/5*10)
+        return difficulty
+    elif segment_type == 'Hills Climbing' or 'Hills Climbing ND':
+        difficulty = 25 + ((climb_length-2000)/5000*6.6) + ((gradient-3)/6*13.4)
+        return difficulty
+    elif segment_type == 'Climbing Hills' or 'Climbing Hills ND' or 'Cobblestone Hills Climbing' or 'Cobblestone Hills Climbing ND' or 'Flat Climbing' or 'Cobblestone Flat Climbing' or 'Climbing Hills Time Trial':
+        difficulty = 30 + ((climb_length-3000)/4000*11.55) + ((gradient-5)/5*23.45)
+        return difficulty
+    elif segment_type == 'Climbing' or 'Climbing ND' or 'Cobblestone Climbing' or 'Cobblestone Climbing ND' or 'Climbing Time Trial':
+        difficulty = 50 + ((climb_length-5000)/10000*16.5) + ((gradient-5)/6*33.5)
+        return difficulty
+    elif segment_type == 'Sprint':
+        difficulty = (climb_length/6000*20) + (gradient/5*15)
+        return difficulty
+    elif segment_type == 'Flat Cobblestone' or 'Cobblestone Time Trial':
+        difficulty = (feature_length/3000*30) + (gradient/3*5)
+        return difficulty
+    elif segment_type == 'Flat Hills Cobblestone' or 'Flat Hills Cobblestone ND':
+        difficulty = 5 + (feature_length/3000*25) + (gradient/3*5)
+        return difficulty
+    elif segment_type == 'Hills Cobblestone' or 'Hills Cobblestone ND' or 'Hills Cobblestone Time Trial':
+        difficulty = 15 + (feature_length/3000*5) + ((gradient-3)/3*8)
+        return difficulty
+    elif segment_type == 'Downhill' or 'Downhill Time Trial':
+        difficulty = ((-gradient-3)/2*5)
+        return difficulty
+    elif segment_type == 'Flat Time Trial':
+        if gradient <= 0:
+            difficulty = 0
+            return difficulty
+        else:
+            difficulty = gradient/3*7.5
+            return difficulty
+    elif segment_type == 'Flat Hills Time Trial':
+        difficulty = 7.5 + ((gradient-3)/2*7.5)
+        return difficulty
+    
+        
 
-    gradients = [p['gradient'] for p in points[start_index:end_index]]
-    total_gradient = sum(gradients)
-    average_gradient = total_gradient / len(gradients) if len(gradients) > 0 else 0
-    max_gradient = max(gradients, default=0)
+
+
+    
+    # Calculate the average and maximum gradient over the feature length
+    #start_index = next(i for i, p in enumerate(points) if p['dist'] >= feature['start_km'])
+    #end_index = next(i for i, p in enumerate(points) if p['dist'] >= feature['end_km'])
+
+    #gradients = [p['gradient'] for p in points[start_index:end_index]]
+    #total_gradient = sum(gradients)
+    #average_gradient = total_gradient / len(gradients) if len(gradients) > 0 else 0
+    #max_gradient = max(gradients, default=0)
 
     # Calculate difficulty as a product of length and average gradient
-    difficulty = feature['length'] * abs(average_gradient)
+    #difficulty = feature['length'] * abs(average_gradient)
 
     # Store average and maximum gradient in the feature
-    feature['average_gradient'] = average_gradient
-    feature['max_gradient'] = max_gradient
+    #feature['average_gradient'] = average_gradient
+    #feature['max_gradient'] = max_gradient
 
-    return difficulty
+    #return difficulty
 
 
 def calculate_climb_length(df):
