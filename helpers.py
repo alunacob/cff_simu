@@ -371,7 +371,8 @@ def merge_and_reclassify_sections(sections):
 
     return merged_sections
 '''
-
+#!CAPAR DIFICULTAD A 100 (NO LO HE AÑADIDO AQUI, QUIZAS CUANDO HAGAS LA LLAMADA A ESTA FUNCION?)
+#Habra que llamar a esta funcion para asignar la dificultad de cada segmento. Creo que hay que definir el parametro dificultad para segmentos.
 def calculate_difficulty(segment_type, climb_length, gradient, feature_length):
     difficulty = 0
     if segment_type == 'Flat':
@@ -522,7 +523,36 @@ def identify_features(points):
 
     return features
 '''
+#Hay que definir un array de porcentajes para cada segmento, en algun lado arriba, para poner lo que salga de esta funcion
+#Definir is_tt para cada etapa asi se puede usar aqui y en el motor, que hará falta
+#Si no es muy dificil, hacer pruebas comprobando que la suma de porcentajes es 1
+def calculate_segment_abilities(segment_type, distance, is_tt):
+    total = 0
+    abilities = {'Stamina': 0, 'Sprint': 0, 'Climbing': 0, 'Flat': 0, 'Technique': 0, 'Downhill': 0, 'Hills': 0, 'Aggressiveness': 0, 'Teamwork' : 0}
+    abilities['Sprint'] = terrain_df[terrain_df['Type'] == segment_type]['Sprint']
+    abilities['Climbing'] = terrain_df[terrain_df['Type'] == segment_type]['Climbing']
+    abilities['Flat'] = terrain_df[terrain_df['Type'] == segment_type]['Flat']
+    abilities['Technique'] = terrain_df[terrain_df['Type'] == segment_type]['Technique']
+    abilities['Downhill'] = terrain_df[terrain_df['Type'] == segment_type]['Downhill']
+    abilities['Hills'] = terrain_df[terrain_df['Type'] == segment_type]['Hills']
+    abilities['Aggressiveness'] = terrain_df[terrain_df['Type'] == segment_type]['Aggressiveness']
+    abilities['Teamwork'] = terrain_df[terrain_df['Type'] == segment_type]['Teamwork']
+    if is_tt:
+         abilities['Stamina'] = terrain_df[terrain_df['Type'] == segment_type]['Stamina'] * distance / 20000
+    else:
+         abilities['Stamina'] = terrain_df[terrain_df['Type'] == segment_type]['Stamina'] * distance / 120000
+    total_no_stamina = abilities['Sprint'] + abilities['Climbing'] + abilities['Flat'] + abilities['Technique'] + abilities['Downhill'] + abilities['Hills'] + abilities['Aggressiveness'] + abilities['Teamwork']
+    abilities['Sprint'] = abilities['Sprint'] * (1 - abilities['Stamina']) / total_no_stamina
+    abilities['Climbing'] = abilities['Climbing'] * (1 - abilities['Stamina']) / total_no_stamina 
+    abilities['Flat'] = abilities['Flat'] * (1 - abilities['Stamina']) / total_no_stamina 
+    abilities['Technique'] = abilities['Technique'] * (1 - abilities['Stamina']) / total_no_stamina 
+    abilities['Downhill'] = abilities['Downhill'] * (1 - abilities['Stamina']) / total_no_stamina 
+    abilities['Hills'] = abilities['Hills'] * (1 - abilities['Stamina']) / total_no_stamina 
+    abilities['Aggressiveness'] = abilities['Aggressiveness'] * (1 - abilities['Stamina']) / total_no_stamina 
+    abilities['Teamwork'] = abilities['Teamwork'] * (1 - abilities['Stamina']) / total_no_stamina
+    return abilities
 
+#No he "borrado" esto aun, te lo dejo a ti
 def calculate_abilities(features, total_distance):
     abilities = {'Stamina': 0, 'Sprint': 0, 'Climbing': 0, 'Flat': 0, 'Technique': 0, 'Downhill': 0, 'Hills': 0, 'Aggressiveness': 0, 'Teamwork' : 0}
   # Define maximum percentages for skill categories
