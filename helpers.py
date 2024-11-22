@@ -556,18 +556,18 @@ def identify_features(points):
 def calculate_segment_abilities(terrain_df, segment_type, distance, is_tt):
     total = 0
     abilities = {'Stamina': 0, 'Sprint': 0, 'Climbing': 0, 'Flat': 0, 'Technique': 0, 'Downhill': 0, 'Hills': 0, 'Aggressiveness': 0, 'Teamwork' : 0}
-    abilities['Sprint'] = terrain_df[terrain_df['Type'] == segment_type]['Sprint']
-    abilities['Climbing'] = terrain_df[terrain_df['Type'] == segment_type]['Climbing']
-    abilities['Flat'] = terrain_df[terrain_df['Type'] == segment_type]['Flat']
-    abilities['Technique'] = terrain_df[terrain_df['Type'] == segment_type]['Technique']
-    abilities['Downhill'] = terrain_df[terrain_df['Type'] == segment_type]['Downhill']
-    abilities['Hills'] = terrain_df[terrain_df['Type'] == segment_type]['Hills']
-    abilities['Aggressiveness'] = terrain_df[terrain_df['Type'] == segment_type]['Aggressiveness']
-    abilities['Teamwork'] = terrain_df[terrain_df['Type'] == segment_type]['Teamwork']
+    abilities['Sprint'] = terrain_df[terrain_df['Type'] == segment_type]['Sprint'].values[0]
+    abilities['Climbing'] = terrain_df[terrain_df['Type'] == segment_type]['Climbing'].values[0]
+    abilities['Flat'] = terrain_df[terrain_df['Type'] == segment_type]['Flat'].values[0]
+    abilities['Technique'] = terrain_df[terrain_df['Type'] == segment_type]['Technique'].values[0]
+    abilities['Downhill'] = terrain_df[terrain_df['Type'] == segment_type]['Downhill'].values[0]
+    abilities['Hills'] = terrain_df[terrain_df['Type'] == segment_type]['Hills'].values[0]
+    abilities['Aggressiveness'] = terrain_df[terrain_df['Type'] == segment_type]['Aggressiveness'].values[0]
+    abilities['Teamwork'] = terrain_df[terrain_df['Type'] == segment_type]['Teamwork'].values[0]
     if is_tt:
-         abilities['Stamina'] = terrain_df[terrain_df['Type'] == segment_type]['Stamina'] * distance / 20000
+         abilities['Stamina'] = terrain_df[terrain_df['Type'] == segment_type]['Stamina'].values[0] * distance / 20000
     else:
-         abilities['Stamina'] = terrain_df[terrain_df['Type'] == segment_type]['Stamina'] * distance / 120000
+         abilities['Stamina'] = terrain_df[terrain_df['Type'] == segment_type]['Stamina'].values[0] * distance / 120000
     total_no_stamina = abilities['Sprint'] + abilities['Climbing'] + abilities['Flat'] + abilities['Technique'] + abilities['Downhill'] + abilities['Hills'] + abilities['Aggressiveness'] + abilities['Teamwork']
     abilities['Sprint'] = abilities['Sprint'] * (1 - abilities['Stamina']) / total_no_stamina
     abilities['Climbing'] = abilities['Climbing'] * (1 - abilities['Stamina']) / total_no_stamina 
