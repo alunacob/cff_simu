@@ -207,6 +207,8 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
                     indices.append(i)
                     if last_point is not None:
                         segment_distance = distance(last_point, point)
+                        if segment_distance == 0 :
+                            continue
                         total_distance2 += segment_distance
                         accumulated_distance += segment_distance
                         elevation_gain = (point.elevation if point.elevation != None else 0) - (last_point.elevation if last_point.elevation != None else 0)
@@ -240,7 +242,7 @@ def parse_gpx(file_path, min_distance=250, min_precise_distance=25):
                                 'delta_dist': accumulated_distance,
                                 'dist': total_distance,
                                 'gradient': accumulated_gradient,
-                                'max_gradient': np.max(np.array(gradients)),
+                                'max_gradient': np.max(np.append(np.array(gradients),accumulated_gradient)),
                                 'min_gradient' : np.min(np.array(gradients)),
                                 'indices': indices,
                                 'feature_type': ''  # To be updated later
@@ -453,11 +455,15 @@ def calculate_difficulty(segment_type, climb_length, gradient, feature_length):
     #return difficulty
 
 
-def calculate_climb_length(df):
+def calculate_climb_length(df, rest_threshold = 1200):
     climb_length = 0
     current_indices = []
-
+    extra_already_processed = []
+    
     for i in range(0, len(df)):
+        if i in extra_already_processed:
+            #print(f' skipping {i} because it was processed')
+            continue
         row = df.iloc[i]        
         if row['gradient'] >= 3:
             if (i == len(df) -1) :
@@ -469,11 +475,32 @@ def calculate_climb_length(df):
                 current_indices.append(i)
                 climb_length += row['delta_dist']
         else:
+            # looking for rest segments in climbs
+            extra_dist = 0
+            for k in range(1,20):
+                if i+k >= len(df): 
+                    break
+                row_extra = df.iloc[i+k]
+                if row_extra['gradient'] >=3 :
+                    extra_dist = 0
+                    #print(f'index: {i+k} continues the previous climb: {current_indices}')
+                    extra_already_processed.append(i+k)
+                    climb_length += row_extra['delta_dist']
+                    current_indices.append(i+k)
+                else:
+                    #print(f'index: {i+k} may be a gap in a climb')
+                    if extra_dist >= rest_threshold:
+                        #print(f'finishing looking at gapsin climb here: {i+k}')
+                        extra_dist += row_extra['delta_dist']
+                        break
+                    extra_dist += row_extra['delta_dist']
             for j in current_indices:
-                df.loc[j, 'climb_length'] = climb_length
+                #if j > 200:
+                    #print(f'{j} climb length {climb_length}')
+                df.loc[j, 'climb_length'] = climb_length if df.iloc[j]['climb_length'] == df.iloc[j]['delta_dist'] else df.iloc[j]['climb_length']
             current_indices = []
             climb_length = 0
-                
+            
 
 def identify_features(points):
 
@@ -526,7 +553,7 @@ def identify_features(points):
 #Hay que definir un array de porcentajes para cada segmento, en algun lado arriba, para poner lo que salga de esta funcion
 #Definir is_tt para cada etapa asi se puede usar aqui y en el motor, que hará falta
 #Si no es muy dificil, hacer pruebas comprobando que la suma de porcentajes es 1
-def calculate_segment_abilities(segment_type, distance, is_tt):
+def calculate_segment_abilities(terrain_df, segment_type, distance, is_tt):
     total = 0
     abilities = {'Stamina': 0, 'Sprint': 0, 'Climbing': 0, 'Flat': 0, 'Technique': 0, 'Downhill': 0, 'Hills': 0, 'Aggressiveness': 0, 'Teamwork' : 0}
     abilities['Sprint'] = terrain_df[terrain_df['Type'] == segment_type]['Sprint']
@@ -560,7 +587,7 @@ def calculate_abilities(features, total_distance):
     max_secondary_skill = 30  # For secondary skills
     max_tertiary_skill = 10  # For tertiary skills
 
-# Skill category mappings
+    # Skill category mappings
     skill_categories = {
         'main': ['Climbing', 'Sprint', 'Hills'],
         'secondary': ['Stamina', 'Flat', 'Downhill'],
