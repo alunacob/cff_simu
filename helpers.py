@@ -379,57 +379,59 @@ def calculate_difficulty(segment_type, climb_length, gradient, feature_length):
     difficulty = 0
     if segment_type == 'Flat':
         if gradient <= 0:
-            return difficulty
+            difficulty = 0
+            #return difficulty
         else:    
             difficulty = gradient/3*5
-            return difficulty
-    elif segment_type == 'Flat Hills' or 'Flat Hills ND':
+            #return difficulty
+    elif segment_type == 'Flat Hills' or segment_type =='Flat Hills ND':
         if gradient <= 0:
             difficulty = 5
-            return difficulty
+            #return difficulty
         else:
             difficulty = 5 + (gradient/3*5)
-            return difficulty
-    elif segment_type == 'Hills Flat' or 'Hills Flat ND':
+            #return difficulty
+    elif segment_type == 'Hills Flat' or segment_type =='Hills Flat ND':
         difficulty = 10 + ((gradient-3)/2*5)
-        return difficulty
-    elif segment_type == 'Hills' or 'Hills ND' or 'Hills Time Trial':
+        #return difficulty
+    elif segment_type == 'Hills' or segment_type =='Hills ND' or segment_type =='Hills Time Trial':
         difficulty = 15 + ((gradient-5)/5*10)
-        return difficulty
-    elif segment_type == 'Hills Climbing' or 'Hills Climbing ND':
+        #return difficulty
+    elif segment_type == 'Hills Climbing' or segment_type =='Hills Climbing ND':
         difficulty = 25 + ((climb_length-2000)/5000*6.6) + ((gradient-3)/6*13.4)
-        return difficulty
-    elif segment_type == 'Climbing Hills' or 'Climbing Hills ND' or 'Cobblestone Hills Climbing' or 'Cobblestone Hills Climbing ND' or 'Flat Climbing' or 'Cobblestone Flat Climbing' or 'Climbing Hills Time Trial':
+        #return difficulty
+    elif segment_type == 'Climbing Hills' or segment_type =='Climbing Hills ND' or segment_type =='Cobblestone Hills Climbing' or segment_type =='Cobblestone Hills Climbing ND' or segment_type =='Flat Climbing' or segment_type =='Cobblestone Flat Climbing' or segment_type =='Climbing Hills Time Trial':
         difficulty = 30 + ((climb_length-3000)/4000*11.55) + ((gradient-5)/5*23.45)
-        return difficulty
-    elif segment_type == 'Climbing' or 'Climbing ND' or 'Cobblestone Climbing' or 'Cobblestone Climbing ND' or 'Climbing Time Trial':
+        #return difficulty
+    elif segment_type == 'Climbing' or segment_type =='Climbing ND' or segment_type =='Cobblestone Climbing' or segment_type =='Cobblestone Climbing ND' or segment_type =='Climbing Time Trial':
         difficulty = 50 + ((climb_length-5000)/10000*16.5) + ((gradient-5)/6*33.5)
-        return difficulty
+        #return difficulty
     elif segment_type == 'Sprint':
         difficulty = (climb_length/6000*20) + (gradient/5*15)
-        return difficulty
-    elif segment_type == 'Flat Cobblestone' or 'Cobblestone Time Trial':
+        #return difficulty
+    elif segment_type == 'Flat Cobblestone' or segment_type =='Cobblestone Time Trial':
         difficulty = (feature_length/3000*30) + (gradient/3*5)
-        return difficulty
-    elif segment_type == 'Flat Hills Cobblestone' or 'Flat Hills Cobblestone ND':
+        #return difficulty
+    elif segment_type == 'Flat Hills Cobblestone' or segment_type =='Flat Hills Cobblestone ND':
         difficulty = 5 + (feature_length/3000*25) + (gradient/3*5)
-        return difficulty
-    elif segment_type == 'Hills Cobblestone' or 'Hills Cobblestone ND' or 'Hills Cobblestone Time Trial':
+        #return difficulty
+    elif segment_type == 'Hills Cobblestone' or segment_type =='Hills Cobblestone ND' or segment_type =='Hills Cobblestone Time Trial':
         difficulty = 15 + (feature_length/3000*5) + ((gradient-3)/3*8)
-        return difficulty
-    elif segment_type == 'Downhill' or 'Downhill Time Trial':
+        #return difficulty
+    elif segment_type == 'Downhill' or segment_type =='Downhill Time Trial':
         difficulty = ((-gradient-3)/2*5)
-        return difficulty
+        #return difficulty
     elif segment_type == 'Flat Time Trial':
         if gradient <= 0:
             difficulty = 0
-            return difficulty
+            #return difficulty
         else:
             difficulty = gradient/3*7.5
-            return difficulty
+            #return difficulty
     elif segment_type == 'Flat Hills Time Trial':
         difficulty = 7.5 + ((gradient-3)/2*7.5)
-        return difficulty
+        #return difficulty
+    return difficulty
     
         
 
