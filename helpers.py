@@ -395,7 +395,7 @@ def calculate_difficulty(segment_type, climb_length, gradient, feature_length):
         difficulty = 10 + ((gradient-3)/2*5)
         #return difficulty
     elif segment_type == 'Hills' or segment_type =='Hills ND' or segment_type =='Hills Time Trial':
-        difficulty = 15 + ((gradient-5)/5*10)
+        difficulty = 15 + ((gradient-3.5)/5*10)
         #return difficulty
     elif segment_type == 'Hills Climbing' or segment_type =='Hills Climbing ND':
         difficulty = 25 + ((climb_length-2000)/5000*6.6) + ((gradient-3)/6*13.4)
@@ -407,8 +407,12 @@ def calculate_difficulty(segment_type, climb_length, gradient, feature_length):
         difficulty = 50 + ((climb_length-5000)/10000*16.5) + ((gradient-5)/6*33.5)
         #return difficulty
     elif segment_type == 'Sprint':
-        difficulty = (climb_length/6000*20) + (gradient/5*15)
-        #return difficulty
+        if gradient <= 0:
+            difficulty = 0
+            #return difficulty
+        else:
+            difficulty = (climb_length/6000*20) + (gradient/5*15)
+            #return difficulty
     elif segment_type == 'Flat Cobblestone' or segment_type =='Cobblestone Time Trial':
         difficulty = (feature_length/3000*30) + (gradient/3*5)
         #return difficulty
